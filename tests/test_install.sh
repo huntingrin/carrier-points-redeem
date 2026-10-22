@@ -40,6 +40,10 @@ for name in cmcc-points-redeem cucc-points-redeem ct-points-redeem; do
 done
 grep -q "请告诉我你的运营商和手机号" "$DEST/SKILL.md" || fail "缺少单问入口"
 grep -q "不要用号段推断运营商" "$DEST/SKILL.md" || fail "缺少禁止号段推断规则"
+grep -q "话费（短信方法）" "$DEST/skills/cucc-points-redeem/GUIDE.md" || fail "联通话费分支未显式展示"
+grep -q "10010" "$DEST/skills/cucc-points-redeem/GUIDE.md" || fail "联通话费缺少 10010 说明"
+grep -q "话费" "$DEST/skills/cucc-points-redeem/agents/openai.yaml" || fail "联通展示信息缺少话费"
+grep -q "10010" "$DEST/SKILL.md" || fail "入口范围缺少联通话费"
 
 echo "4. 归档旧独立版本（可选开关）"
 mkdir -p "$TMP/skills/cmcc-points-redeem" "$TMP/skills/ct-points-redeem"

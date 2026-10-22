@@ -49,6 +49,8 @@ description: 移动、联通、电信积分兑换统一入口。用户一次提�
 | 联通 | `cucc-points-redeem` | `skills/cucc-points-redeem/GUIDE.md` |
 | 电信 | `ct-points-redeem` | `skills/ct-points-redeem/GUIDE.md` |
 
+> 联通的话费是 `10010` 短信文字方法，不是商城商品；用户问“能换什么”时，子技能会同时说明这个选项。
+
 执行规则：
 
 1. **先定位技能根目录。** 本技能根目录就是本 `SKILL.md` 所在目录。若宿主没有给出绝对路径，依次检查 `~/.codex/skills/carrier-points-redeem/`、`~/.cola/skills/carrier-points-redeem/`、`~/.claude/skills/carrier-points-redeem/`，用存在的那个作为根目录。下表中的路径都相对于这个根目录。
@@ -88,7 +90,7 @@ description: 移动、联通、电信积分兑换统一入口。用户一次提�
 ## 范围
 
 - **移动**：现有 AI 豆兑换本机话费，现金补款必须为 0 元。
-- **联通**：积分兑换流量包、语音包、影音组合；话费仅输出指定文字方法。
+- **联通**：积分兑换流量包、语音包、影音组合；话费可走 `10010` 短信方法，仅输出指定文字，不登录商城。
 - **电信**：积分兑换本机话费直充，现金补款必须为 0 元。
 
 不办理：套餐变更、积分抽奖、实物兑换、提现、代他人充值、现金购买、自动续订业务。
