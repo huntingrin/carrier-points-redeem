@@ -27,6 +27,7 @@ assert_file "$DEST/skills/ct-points-redeem/GUIDE.md"
 assert_file "$DEST/skills/ct-points-redeem/scripts/transaction_state.py"
 assert_file "$DEST/skills/cucc-points-redeem/references/browser-flow.md"
 assert_file "$DEST/references/observe.md"
+assert_file "$DEST/references/browser.md"
 assert_file "$DEST/tests/test_skill_contract.py"
 [ ! -d "$DEST/.git" ] || fail "不应包含 .git"
 

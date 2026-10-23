@@ -111,6 +111,28 @@ class SkillShape(unittest.TestCase):
         script = (ROOT / "install.sh").read_text(encoding="utf-8")
         self.assertIn('"$SCRIPT_DIR/references"', script, "install.sh 未拷贝 references/，安装后会缺文件")
 
+    def test_reference_docs_are_linked_from_entry(self):
+        entry = (ROOT / "SKILL.md").read_text(encoding="utf-8")
+        for name in ("references/observe.md", "references/browser.md"):
+            self.assertIn(name, entry, f"入口没有指向 {name}")
+
+
+class FirstRun(unittest.TestCase):
+    def test_entry_does_not_force_a_browser(self):
+        entry = (ROOT / "SKILL.md").read_text(encoding="utf-8")
+        for phrase in ("不要要求安装或切换浏览器", "先查登录态", "不要问\"你用哪个浏览器\""):
+            self.assertIn(phrase, entry, f"入口缺少首次使用约束: {phrase}")
+
+    def test_browser_doc_keeps_capability_ladder(self):
+        text = (ROOT / "references/browser.md").read_text(encoding="utf-8")
+        for phrase in ("T1", "T2", "T3", "xdg-open", "不要", "Cookie"):
+            self.assertIn(phrase, text, f"浏览器文档缺少: {phrase}")
+
+    def test_readme_documents_manual_install(self):
+        text = (ROOT / "README.md").read_text(encoding="utf-8")
+        self.assertIn("手动安装", text)
+        self.assertIn("Windows", text)
+
 
 class SafetyInvariants(unittest.TestCase):
     def test_entry_keeps_core_rules(self):

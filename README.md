@@ -22,7 +22,8 @@
 ├── install.sh                  # 静默安装
 ├── uninstall.sh                # 卸载
 ├── references/
-│   └── observe.md              # 一屏一读：页面读取模板与降级方式（可选读）
+│   ├── observe.md              # 一屏一读：页面读取模板与降级方式（可选读）
+│   └── browser.md              # 浏览器能力分档、登录态预检与默认浏览器（可选读）
 ├── skills/
 │   ├── cmcc-points-redeem/     # 移动
 │   ├── cucc-points-redeem/     # 联通
@@ -44,9 +45,18 @@
 | 联通 | `GUIDE.md` + 选品时的 `redemption-types.md` + 话费分支的 `phonefee-text.md` | `browser-flow.md`、`transaction-state.md` |
 | 电信 | `GUIDE.md` + 核对面额时的 `phonefee.md` | `browser-flow.md`、`transaction-state.md` |
 
-`references/observe.md` 也属于"需要时再读"：要写页面提取脚本时才打开，不写脚本就不读。
+`references/observe.md` 和 `references/browser.md` 都属于"需要时再读"：前者在要写页面提取脚本时打开，后者在宿主没有浏览器工具、或第一次导航失败时打开。
 
 正常一笔兑换**不启动任何脚本、不写中间 JSON**。子技能的 `transaction_state.py` 只在跨轮恢复或需要防重复提交时使用。
+
+## 第一次使用
+
+普通用户第一次跑，只有两件需要知道的事：
+
+1. **用你电脑上现有的浏览器，不需要装新的。** 宿主有自己的浏览器就直接用；没有就用系统默认浏览器打开官网，你点、它读。
+2. **第一次要本人登录一次**（手机号 + 短信码，部分省份还要服务密码或拼图）。同一个浏览器会保留会话，之后通常不用再登。
+
+不需要导 Cookie、不需要装插件、不需要 API Key。登录态优先复用：打开官网会先看有没有登录，已登录就直接进业务，不会再让你登一遍。
 
 ## 静默安装
 
@@ -93,7 +103,18 @@
 
 宿主只看到 `carrier-points-redeem` 一个技能；子技能由入口按需读取，不会单独出现在技能列表里。
 
-卸载：
+### 手动安装（任意系统，含 Windows）
+
+没有 bash 时不需要安装脚本，整目录复制即可。目标目录换成你宿主实际使用的 `skills/`：
+
+```text
+macOS / Linux   ~/.codex/skills/carrier-points-redeem/
+Windows         %USERPROFILE%\.codex\skills\carrier-points-redeem\
+```
+
+复制整个仓库（包括 `SKILL.md`、`references/`、`skills/`、`agents/`）到该目录，确保 `SKILL.md` 位于目录根部。Windows 自带 Git Bash 时也可以直接 `./install.sh`。
+
+手动安装的目录，卸载就是删掉它。用安装脚本装的话：
 
 ```sh
 ./uninstall.sh
