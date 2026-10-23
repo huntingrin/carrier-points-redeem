@@ -1,6 +1,6 @@
 # Cola 浏览器适配
 
-仅在调用参数不清、能力报错或电信需要移动环境时读本文件。入口和 GUIDE 已有业务流程，不再重复。
+仅在调用参数不清、能力报错或电信下单前需要移动环境时读本文件。新任务默认未登录，直接打开 GUIDE 的登录直达 URL；不先检查登录态、UA 或日期。
 
 ## 使用已启用的接口
 
@@ -8,17 +8,17 @@
 
 Cola 已启用内置 `browser` 且无覆盖约定：
 
-- 使用稳定的 `profile="cola"`；新业务只创建自己的页，已有任务用原 `targetId`，每次显式带 profile/targetId。不默认使用 `user` profile 或接管用户标签。关闭自己的页即可，不停止整个 profile，登录会话有效时可继续复用。
+- 使用 `profile="cola"`；新业务在自己的页直接打开登录 URL，已有任务用原 `targetId`，每次显式带 profile/targetId。不默认使用 `user` profile 或接管用户标签。同笔验证、回跳与对账复用该页；不以旧会话作为新任务的起步条件，也不清 Cookie 或强制退出已有账户。
 - `open` 可自动启动 profile，不先做 status/start/profiles/tabs 探测。只有调用失败或原 targetId 丢失时才检查对应状态；tabs 列表不能证明页面属于本任务。
 - 原页面丢失且已有提交尝试时，新建页只能去官方入口查原订单，不再下单。登录和验证在原页交接，等本人确认；无法展示该页供本人操作时报告交接限制，不调用 focus 抢占窗口。
 - 需要用户继续查看时保留订单/成功页，结束时只清理自己的无关页。Ego 按其技能结束/交接 TaskSpace。
 
 以下 JSON 是传给 `browser` 的参数示例；其中 targetId 和 ref 必须替换为本次动作/快照真实返回值。
 
-打开业务入口（URL 换成 GUIDE 中本次运营商入口）：
+直接打开登录页（URL 换成 GUIDE 中本次运营商完整登录地址）：
 
 ```json
-{"action":"open","profile":"cola","targetUrl":"https://jf.10086.cn"}
+{"action":"open","profile":"cola","targetUrl":"https://jf.10086.cn/#/loginPage?back=true"}
 ```
 
 一次快照读取业务字段和可操作 refs；`limit` 太小可能截断规则，缺什么再定向补读：
@@ -48,9 +48,9 @@ Cola 已启用内置 `browser` 且无覆盖约定：
 
 2026-10-23 核对本地 Cola 副本 `cdeef1ff7`：内置工具支持 resize、evaluate、wait 和 batch，但未暴露 UA/设备模拟；该结论是适配基线，不代表其他版本。以目标会话实际工具定义和已配置能力为准，不重复扫描源码或尝试不存在的 action。
 
-`resize` 不能设置请求 UA，`evaluate` 修改 navigator 也不能代替真实请求 UA。目标若只有上述内置接口，本技能无法自行补出移动环境：停在下单前，说明需 Cola 提供页面级 UA+移动视口能力，或由本人在手机官方页面办理。不私连控制端口、不改全局 UA。
+**这些限制不能拦截打开登录页。** 电信直达登录表单已在桌面 UA 验证可见，先打开并交接；本人登录后、准备兑换前才检查移动环境。`resize` 或修改 navigator 不能代替真实请求 UA。缺少该能力时停在下单前，由本人手机完成后续兑换；不私连控制端口或改全局 UA。
 
-若目标已提供设备模拟接口，使用其真实参数，在首次导航前设置手机 UA 和 390×844 移动视口。新弹页也需确认配置是否继承，不把旧页的设置当成全局生效。
+若目标已提供设备模拟接口，登录后使用其真实参数设置手机 UA 和 390×844 移动视口，再导航或重新加载话费专区，保留本次会话。务必在点“兑换”建单前完成；新弹页确认配置是否继承。
 
 已指定且可用的 Ego 支持页面级 CDP 时，在已归属本任务的 page 上执行：
 
@@ -64,4 +64,4 @@ await page.cdp("Emulation.setDeviceMetricsOverride", {
 });
 ```
 
-这不是 Cola `browser` 的调用参数；不要把 page.cdp 填入 browser/evaluate。设备就绪后再走电信 GUIDE，页面回跳则查既有订单。
+这不是 Cola `browser` 的调用参数；不要把 page.cdp 填入 browser/evaluate。设备就绪后继续电信兑换；登录始终优先，已建单后的回跳先查原订单。

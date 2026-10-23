@@ -17,7 +17,7 @@
 ## 入口
 
 - 话费兑换专区：<https://apps.telefen.com/jycalls/?channelCode=HGOKHD>
-- 商城登录：`m.telefen.com/MobileSSOv2/Login.aspx?appcode=HGOKHD&goBack=...`
+- 商城登录：使用 [GUIDE 的完整直达地址](../GUIDE.md#登录直达)，保留 `appCode=CALLS`、`channelCode=HGOKHD` 及完整 `goBack`。
 - 收银台：`cashier.telefen.com/dopay?payflag=...` → `cashier.telefen.com/ssocallback?...`
 - 成功页：`apps.telefen.com/jycalls/Success?...&result=true`
 - 积分：<https://jf.189.cn/selfcenter/myPoints.aspx>
@@ -25,17 +25,15 @@
 
 `channelCode=HGOKHD` 是官方移动商城渠道参数；不要写死 `promoid`、`payflag`、`Token` 或面额商品 ID。
 
-## 第一步：移动端环境
+## 第一步：直接登录
 
-必须在打开页面前完成真实移动 UA 和移动视口设置，调用方式只维护在 [移动环境](../../../references/browser.md#电信移动环境)。不支持则停止下单；resize 或修改 navigator 不够。实测桌面 UA 下收银台会回跳 `jf.189.cn/pchome`，不能把它当登录失效重新建单。
+1. 默认未登录，直接打开 GUIDE 的完整登录 URL，不先访问话费专区或探测会话。
+2. 页面显示手机号、短信验证码和“登录”后交接，由本人完成。
+3. 确认后回 `apps.telefen.com/jycalls`，核对账户。桌面 UA 可用于打开登录页，不能在此之前因 UA 或日期停止。
 
-## 第二步：登录
+## 第二步：需要兑换时设置移动环境
 
-1. 打开话费专区。
-2. 未登录会跳 `m.telefen.com/MobileSSOv2/Login.aspx`，页面为手机号 + 短信验证码 + 登录。
-3. 交接当前页，由本人填手机号、获取并填写短信码。
-4. 登录后回到 `apps.telefen.com/jycalls` 或商城首页。
-5. 核对页头脱敏号码与本次要充值的号码一致。
+在点“兑换”建单前按 [移动环境](../../../references/browser.md#电信移动环境) 设置真实移动 UA 和移动视口，再同页加载专区。能力缺失则停在下单前；resize 或修改 navigator 不够。实测桌面 UA 下收银台回跳时先查原订单，不重新建单。
 
 不要：
 

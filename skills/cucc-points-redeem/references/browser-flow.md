@@ -4,7 +4,8 @@
 
 ## 入口与页面识别
 
-- 官方电脑商城：<https://img.client.10010.com/jifenshangchengpc/index.html>
+- 登录直达：<https://uac.10010.com/portal/mallLogin.jsp?redirectURL=https://img.client.10010.com/jifenshangchengpc/index.html#/>
+- 登录后电脑商城：<https://img.client.10010.com/jifenshangchengpc/index.html>
 - `#/`：账户概览、通信积分/奖励积分和商品分类。
 - `#/shopList`：商品列表、筛选、分页或搜索；`我能兑换`只是候选筛选。
 - `#/goodinfo?goodsId=...`：商品详情。goodsId从本轮官网实际链接或弹出页取得，不沿用历史商品ID。

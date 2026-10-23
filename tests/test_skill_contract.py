@@ -10,6 +10,7 @@ import subprocess
 import sys
 import unittest
 from pathlib import Path
+from urllib.parse import parse_qs, urlsplit
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -17,12 +18,13 @@ ENTRY = "SKILL.md"
 # Include the entry itself: counting only child files hid the largest fixed cost.
 READ_PATHS = {
     "联通话费方法": (["skills/cucc-points-redeem/references/phonefee-text.md"], 3000),
-    "移动": (["skills/cmcc-points-redeem/GUIDE.md"], 3700),
+    "移动": (["skills/cmcc-points-redeem/GUIDE.md"], 4000),
     "联通查询": (["skills/cucc-points-redeem/GUIDE.md"], 4300),
     "联通选品": (["skills/cucc-points-redeem/GUIDE.md",
                  "skills/cucc-points-redeem/references/redemption-types.md"], 5600),
     # Conservatively count the complete adapter even though only its mobile section is needed.
-    "电信首次适配": (["skills/ct-points-redeem/GUIDE.md", "references/browser.md"], 7600),
+    "电信直达登录": (["skills/ct-points-redeem/GUIDE.md"], 5100),
+    "电信登录后兑换适配": (["skills/ct-points-redeem/GUIDE.md", "references/browser.md"], 7800),
 }
 EXAMPLE_NUMBERS = {"13800138000", "13900139000", "13900000000"}
 LINK = re.compile(r"\[[^\]]*\]\(([^)\s]+)\)")
@@ -86,6 +88,44 @@ class SkillBundle(unittest.TestCase):
                 if number not in EXAMPLE_NUMBERS:
                     found.append(f"{path.relative_to(ROOT)}: {number[:3]}****{number[-4:]}")
         self.assertEqual(found, [])
+
+
+class DirectLoginEntries(unittest.TestCase):
+    """Check the actual first navigation target and its business return chain."""
+
+    def first_url(self, carrier):
+        text = (ROOT / f"skills/{carrier}-points-redeem/GUIDE.md").read_text(encoding="utf-8")
+        urls = re.findall(r"<(https://[^>]+)>", text)
+        self.assertTrue(urls)
+        return urlsplit(urls[0])
+
+    def test_mobile_starts_on_the_login_route(self):
+        url = self.first_url("cmcc")
+        self.assertEqual(url.netloc, "jf.10086.cn")
+        self.assertEqual(url.fragment.split("?", 1)[0], "/loginPage")
+
+    def test_unicom_starts_on_login_and_returns_to_points_mall(self):
+        url = self.first_url("cucc")
+        self.assertEqual((url.netloc, url.path), ("uac.10010.com", "/portal/mallLogin.jsp"))
+        target = urlsplit(parse_qs(url.query)["redirectURL"][0])
+        self.assertEqual((target.netloc, target.path),
+                         ("img.client.10010.com", "/jifenshangchengpc/index.html"))
+
+    def test_telecom_preserves_the_full_sso_callback(self):
+        url = self.first_url("ct")
+        self.assertEqual((url.netloc, url.path), ("m.telefen.com", "/MobileSSOV2/Login.aspx"))
+        params = parse_qs(url.query)
+        self.assertEqual(params["appCode"], ["CALLS"])
+        self.assertEqual(params["channelCode"], ["HGOKHD"])
+        callback = urlsplit(params["goBack"][0])
+        self.assertEqual((callback.netloc, callback.path),
+                         ("apps.telefen.com", "/jycalls/sso/ssoLogin/login"))
+        inner = parse_qs(callback.query)
+        self.assertEqual(inner["loginUrl"], ["https://apps.telefen.com/jycalls/sso/ssoLogin/login"])
+        self.assertEqual(inner["goBack"], ["https://apps.telefen.com/jycalls/?channelCode=HGOKHD"])
+        self.assertEqual(inner["channelCode"], ["HGOKHD"])
+        self.assertEqual(inner["ssoType"], ["1"])
+        self.assertEqual(inner["errPage"], ["https://cdn.img.telefen.com/webstatic/sso/error.html?msg="])
 
 
 class ExistingSubmissionGuards(unittest.TestCase):

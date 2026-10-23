@@ -25,7 +25,7 @@ git clone https://github.com/huntingrin/cucc-points-redeem.git
 ## 运行要求
 
 - 宿主具备浏览器导航、读取页面、填写和点击能力，并遵循其页面所有权、后台操作及人工交接规则。
-- 本人在中国联通官网完成登录；复用有效会话，无需导出 Cookie。
+- 新任务默认未登录，直接打开 GUIDE 的官方登录链接，由本人完成；同一笔后续步骤复用本次页面，无需导出 Cookie。
 - 可选的本地提交保护脚本使用 Python 3 标准库，文件锁依赖 macOS/Linux 的 `fcntl`。没有相应执行能力时，由 Agent 按同样规则维护私有断点。
 
 脚本只记录计划、提交断点和核对结果，不控制浏览器、不读取短信、不执行兑换。运行状态保存在仓库外的私有任务目录。用法见[状态脚本说明](references/transaction-state.md)。
