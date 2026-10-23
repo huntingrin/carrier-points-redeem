@@ -9,17 +9,19 @@
 Cola 已启用内置 `browser` 且无覆盖约定：
 
 - 使用 `profile="cola"`；新业务在自己的页直接打开登录 URL，已有任务用原 `targetId`，每次显式带 profile/targetId。不默认使用 `user` profile 或接管用户标签。同笔验证、回跳与对账复用该页；不以旧会话作为新任务的起步条件，也不清 Cookie 或强制退出已有账户。
-- `open` 可自动启动 profile，不先做 status/start/profiles/tabs 探测。只有调用失败或原 targetId 丢失时才检查对应状态；tabs 列表不能证明页面属于本任务。
+- `open` 会新建页，仅本任务无页时调用一次，立即保存返回的 `targetId`；已有页直接接续。首页、空白、超时均不重复 open，也不为同一次登录创建第二个 TaskSpace/Page。open 超时但可能已建页时先恢复本任务 targetId，不能盲目再开；tabs 列表不能证明页面所有权。
 - 原页面丢失且已有提交尝试时，新建页只能去官方入口查原订单，不再下单。登录和验证在原页交接，等本人确认；无法展示该页供本人操作时报告交接限制，不调用 focus 抢占窗口。
 - 需要用户继续查看时保留订单/成功页，结束时只清理自己的无关页。Ego 按其技能结束/交接 TaskSpace。
 
-以下 JSON 是传给 `browser` 的参数示例；其中 targetId 和 ref 必须替换为本次动作/快照真实返回值。
+以下为 `browser` 参数示例；targetId 和 ref 用本次真实返回值。
 
-直接打开登录页（URL 换成 GUIDE 中本次运营商完整登录地址）：
+仅本任务尚无页面时打开登录入口（URL 保留完整 hash/query）：
 
 ```json
 {"action":"open","profile":"cola","targetUrl":"https://jf.10086.cn/#/loginPage?back=true"}
 ```
+
+返回不代表登录页已就绪。移动若实际落到首页，用同一 targetId 快照并点击“登录”或“请登录”；等手机号、验证码输入框和登录按钮均可见才交接。不得用第二次 open 修复首页或慢加载。
 
 一次快照读取业务字段和可操作 refs；`limit` 太小可能截断规则，缺什么再定向补读：
 

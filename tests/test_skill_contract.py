@@ -18,7 +18,8 @@ ENTRY = "SKILL.md"
 # Include the entry itself: counting only child files hid the largest fixed cost.
 READ_PATHS = {
     "联通话费方法": (["skills/cucc-points-redeem/references/phonefee-text.md"], 3000),
-    "移动": (["skills/cmcc-points-redeem/GUIDE.md"], 4000),
+    # Includes same-page recovery when the login URL lands on the homepage.
+    "移动": (["skills/cmcc-points-redeem/GUIDE.md"], 4100),
     "联通查询": (["skills/cucc-points-redeem/GUIDE.md"], 4300),
     "联通选品": (["skills/cucc-points-redeem/GUIDE.md",
                  "skills/cucc-points-redeem/references/redemption-types.md"], 5600),
