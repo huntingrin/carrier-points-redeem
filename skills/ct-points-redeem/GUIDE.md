@@ -32,7 +32,7 @@ description: "中国电信积分兑本机话费：移动端商城最短路径，
      width: 390, height: 844, deviceScaleFactor: 3, mobile: true,
    });
    ```
-   其他宿主使用对应的设备模拟或移动端浏览器。**不要用桌面 UA 打开话费页/收银台**，否则收银台会 302 回 `jf.189.cn/pchome`，看起来像登录失效。
+   其他宿主使用对应的设备模拟或移动端浏览器：Playwright `browser.newContext({ userAgent, viewport: { width: 390, height: 844 }, isMobile: true, deviceScaleFactor: 3 })`；Puppeteer `page.setUserAgent(ua)` + `page.setViewport({ width: 390, height: 844, isMobile: true, deviceScaleFactor: 3 })`；通用 CDP 用 `Emulation.setUserAgentOverride` + `Emulation.setDeviceMetricsOverride`。**不要用桌面 UA 打开话费页/收银台**，否则收银台会 302 回 `jf.189.cn/pchome`，看起来像登录失效。宿主完全无法设置时，先用桌面环境做只读核对，并明确告知用户"这台宿主可能回跳，我不会点第二次"；出现回跳就停止并查订单，不要连续点击。
 
 2. **只登录一次商城。** 打开话费专区 <https://apps.telefen.com/jycalls/?channelCode=HGOKHD>。未登录会跳到 `m.telefen.com/MobileSSOv2/Login.aspx`，交接给本人填手机号和短信码。登录后回话费专区。
    - 不要先登录星级中心 `xjfw.189.cn`，兑话费不需要它。
@@ -41,9 +41,9 @@ description: "中国电信积分兑本机话费：移动端商城最短路径，
 
 3. **读账户和面额。** 等业务数据完整加载后读取：脱敏号码、可用积分、充值号码、面额列表和规则。页面初始的 `0` 或空列表可能是占位；合法余额确实为 0 时如实报告。
 
-4. **选面额。** 按 [话费规则](references/phonefee.md) 核对每个面额所需积分、是否本机、是否支持现金、到账方式和限制。用编号表格让用户选；不同账号/省份的面额可能不同，不套用旧样本的 10/20/30/50/100 元表。
+4. **选面额。** 按 [话费规则](references/phonefee.md) 核对每个面额所需积分、是否本机、是否支持现金、到账方式和限制。用编号表格让用户选；不同账号/省份的面额可能不同，不套用旧样本的 10/20/30/50/100 元表。**用户已经指定面额时跳过表格**，直接核对并进入下单。
 
-5. **取得本笔授权。** 用户明确选定面额、积分和现金条件后，才进入下单。仅说“看看”仍是只读。
+5. **取得本笔授权。** 用户明确选定面额、现金条件为 0 后，才进入下单。所需积分只有登录后才可见，不要求用户在聊天里预先给出：下单前把"面额、所需积分、现金 0"写在同一条消息里**告知**（这是说明，不是再要一次同意）。只在四种情况下停下让用户决定：所需积分超过可用积分；出现任何现金项；页面没有用户指定的面额；用户事先给了积分预算而本次超出。其余情况按页面成本直接下单，不引入固定兑换比例做判断。
 
 6. **下单，只点一次。** 选中面额，点「兑换」一次。读取并记录订单号、面额、积分和现金。不要因为页面跳转、加载慢或看起来“没反应”而重复点击。
    - 正常应进入 `cashier.telefen.com/dopay` 收银台。
@@ -56,10 +56,9 @@ description: "中国电信积分兑本机话费：移动端商城最短路径，
    - 本人确认后先判断页面阶段：成功页/处理中只读对账，不再支付。
    - 页面仍在原确认页且条件未变，才允许本人完成的那一次提交；不要由 Agent 重复点。
 
-9. **核对结果。** 分别记录：是否提交、扣分、现金、订单号/状态、到账。扣分不等于到账；「订单已完成」与「话费已到账」是不同证据。
-   - 积分页：<https://jf.189.cn/selfcenter/myPoints.aspx>
-   - 订单页：<https://jf.189.cn/selfcenter/order.aspx>
+9. **核对结果。** 优先用同一会话的成功页、收银台和订单页取证，不要再登录第二个系统。分别记录：是否提交、扣分、现金、订单号/状态、到账。扣分不等于到账；「订单已完成」与「话费已到账」是不同证据。
    - 成功页：`apps.telefen.com/jycalls/Success?...&result=true`
+   - 积分明细/历史订单在 `jf.189.cn`，属于另一套 PC 账号体系，去查可能再要一次登录。需要独立核验时先说明这次额外登录，由用户决定；不要为了对账默认再登一次。
 
 ## 硬性约束
 
@@ -75,7 +74,7 @@ description: "中国电信积分兑本机话费：移动端商城最短路径，
 
 ## 可选：本地提交保护
 
-需要跨轮恢复或防止重复提交时，使用 [状态脚本说明](references/transaction-state.md) 中的 `scripts/transaction_state.py`：
+正常一笔兑换**不需要运行脚本**，也不写中间 JSON。只有跨轮恢复或需要防重复提交时，才使用 [状态脚本说明](references/transaction-state.md) 中的 `scripts/transaction_state.py`：
 
 ```sh
 python3 /absolute/skill/scripts/transaction_state.py --state /absolute/task/transaction.json prepare --plan /absolute/task/plan.json

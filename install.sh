@@ -68,7 +68,9 @@ copy_bundle() {
     "$SCRIPT_DIR/THIRD_PARTY.md" \
     "$SCRIPT_DIR/LICENSE" \
     "$SCRIPT_DIR/agents" \
+    "$SCRIPT_DIR/references" \
     "$SCRIPT_DIR/skills" \
+    "$SCRIPT_DIR/tests" \
     "$SCRIPT_DIR/install.sh" \
     "$SCRIPT_DIR/uninstall.sh" \
     "$dest/"
@@ -86,7 +88,7 @@ install_to() {
   copy_bundle "$tmp"
   find "$tmp" -type d -name __pycache__ -prune -exec rm -rf {} +
   find "$tmp" -type f -name '*.pyc' -exec rm -f {} +
-  chmod +x "$tmp/install.sh" "$tmp/uninstall.sh"
+  chmod +x "$tmp/install.sh" "$tmp/uninstall.sh" "$tmp/tests/test_install.sh"
 
   if [ -e "$dest" ] || [ -L "$dest" ]; then
     rm -rf "$backup"

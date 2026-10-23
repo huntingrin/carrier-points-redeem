@@ -14,22 +14,39 @@
 
 ```text
 .
-├── SKILL.md                    # 唯一入口：提问、校验、路由
+├── SKILL.md                    # 唯一入口：提问、校验、路由、执行约定
 ├── README.md
-├── THIRD_PARTY.md              # 上游仓库、提交与许可证说明
+├── THIRD_PARTY.md              # 上游仓库、提交、本地修改与许可证说明
 ├── LICENSE                     # 仅覆盖本仓库新增的整合层
 ├── agents/openai.yaml          # 宿主展示信息
 ├── install.sh                  # 静默安装
 ├── uninstall.sh                # 卸载
+├── references/
+│   └── observe.md              # 一屏一读：页面读取模板与降级方式（可选读）
 ├── skills/
 │   ├── cmcc-points-redeem/     # 移动
 │   ├── cucc-points-redeem/     # 联通
 │   └── ct-points-redeem/       # 电信
 └── tests/
-    └── test_install.sh         # 安装/重复安装/卸载的离线测试
+    ├── test_install.sh         # 安装/重复安装/卸载的离线测试
+    └── test_skill_contract.py  # 链接、阅读路径、安全约束的离线检查
 ```
 
 三个子技能保留上游的说明书、`references/`、`scripts/` 和测试，仅去掉了与运行无关的调研与实测记录目录。子技能说明书统一命名为 `GUIDE.md`，避免宿主把嵌套目录也识别成独立技能；入口按路由结果读取对应的 `GUIDE.md`。
+
+## 一次兑换要读什么
+
+优化后的正常路径是**每家只读一到两篇**，失败和恢复用的文档默认不读：
+
+| 运营商 | 必读 | 只在失败/恢复时读 |
+|---|---|---|
+| 移动 | `GUIDE.md`（51 行，自足） | — |
+| 联通 | `GUIDE.md` + 选品时的 `redemption-types.md` + 话费分支的 `phonefee-text.md` | `browser-flow.md`、`transaction-state.md` |
+| 电信 | `GUIDE.md` + 核对面额时的 `phonefee.md` | `browser-flow.md`、`transaction-state.md` |
+
+`references/observe.md` 也属于"需要时再读"：要写页面提取脚本时才打开，不写脚本就不读。
+
+正常一笔兑换**不启动任何脚本、不写中间 JSON**。子技能的 `transaction_state.py` 只在跨轮恢复或需要防重复提交时使用。
 
 ## 静默安装
 
@@ -119,11 +136,21 @@
 
 ## 测试
 
+在源码仓库或安装后的技能目录里都可以运行（安装会一并拷贝 `tests/`）：
+
 ```sh
 bash tests/test_install.sh
+python3 -m unittest discover -s tests -p 'test_skill_contract.py' -v
 ```
 
-测试在临时目录中执行安装、重复安装和卸载，不访问网络。
+测试在临时目录中执行安装、重复安装和卸载，并检查文档链接、正常路径规模、脱敏与安全约束；不访问网络。
+
+子技能自带的状态脚本测试：
+
+```sh
+cd skills/ct-points-redeem   && python3 -m unittest discover -s tests -p 'test_transaction_state.py' -v
+cd skills/cucc-points-redeem && python3 -m unittest discover -s tests -p 'test_transaction_state.py' -v
+```
 
 ## 来源与许可证
 

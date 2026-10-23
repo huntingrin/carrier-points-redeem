@@ -26,6 +26,8 @@ assert_file "$DEST/skills/ct-points-redeem/GUIDE.md"
 [ ! -e "$DEST/skills/ct-points-redeem/SKILL.md" ] || fail "子技能不应暴露 SKILL.md"
 assert_file "$DEST/skills/ct-points-redeem/scripts/transaction_state.py"
 assert_file "$DEST/skills/cucc-points-redeem/references/browser-flow.md"
+assert_file "$DEST/references/observe.md"
+assert_file "$DEST/tests/test_skill_contract.py"
 [ ! -d "$DEST/.git" ] || fail "不应包含 .git"
 
 echo "2. 重复安装会整体替换"
@@ -44,6 +46,7 @@ grep -q "话费（短信方法）" "$DEST/skills/cucc-points-redeem/GUIDE.md" ||
 grep -q "10010" "$DEST/skills/cucc-points-redeem/GUIDE.md" || fail "联通话费缺少 10010 说明"
 grep -q "话费" "$DEST/skills/cucc-points-redeem/agents/openai.yaml" || fail "联通展示信息缺少话费"
 grep -q "10010" "$DEST/SKILL.md" || fail "入口范围缺少联通话费"
+grep -q "references/observe.md" "$DEST/SKILL.md" || fail "入口缺少一屏一读模板引用"
 
 echo "4. 归档旧独立版本（可选开关）"
 mkdir -p "$TMP/skills/cmcc-points-redeem" "$TMP/skills/ct-points-redeem"
