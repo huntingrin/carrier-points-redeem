@@ -128,6 +128,13 @@ class FirstRun(unittest.TestCase):
         for phrase in ("T1", "T2", "T3", "xdg-open", "不要", "Cookie"):
             self.assertIn(phrase, text, f"浏览器文档缺少: {phrase}")
 
+    def test_login_entry_is_not_hand_built(self):
+        entry = (ROOT / "SKILL.md").read_text(encoding="utf-8")
+        self.assertIn("不要手工拼登录 URL", entry)
+        text = (ROOT / "references/browser.md").read_text(encoding="utf-8")
+        for phrase in ("让站点带你过去", "goBack", "已经是登录页就直接交接"):
+            self.assertIn(phrase, text, f"浏览器文档缺少登录入口约束: {phrase}")
+
     def test_readme_documents_manual_install(self):
         text = (ROOT / "README.md").read_text(encoding="utf-8")
         self.assertIn("手动安装", text)
