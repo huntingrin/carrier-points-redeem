@@ -1,6 +1,6 @@
 # 官方话费兑换浏览器流程
 
-在登录、读面额、下单、收银台或恢复时读取。使用宿主浏览器能力；Ego 宿主遵循其 TaskSpace、后台操作和交接规则。
+仅在页面判读不清、异常或恢复时读取；正常流程使用 GUIDE。浏览器接口和移动环境以 [Cola 适配](../../../references/browser.md) 为准。
 
 ## 会话地图（先看这一节）
 
@@ -27,22 +27,7 @@
 
 ## 第一步：移动端环境
 
-**必须在打开页面前完成。** 桌面 UA 下，收银台会 302 到 `https://jf.189.cn/pchome/`，表现为“点兑换后回到商城首页”。
-
-Ego 宿主：
-
-```js
-await page.cdp("Emulation.setUserAgentOverride", {
-  userAgent: "Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Mobile/15E148 Safari/604.1",
-  acceptLanguage: "zh-CN,zh;q=0.9",
-  platform: "iPhone",
-});
-await page.cdp("Emulation.setDeviceMetricsOverride", {
-  width: 390, height: 844, deviceScaleFactor: 3, mobile: true,
-});
-```
-
-其他宿主：使用设备模拟（iPhone / 390×844 / mobile）或在移动端浏览器中打开。不要在桌面窗口直接操作话费收银台。
+必须在打开页面前完成真实移动 UA 和移动视口设置，调用方式只维护在 [移动环境](../../../references/browser.md#电信移动环境)。不支持则停止下单；resize 或修改 navigator 不够。实测桌面 UA 下收银台会回跳 `jf.189.cn/pchome`，不能把它当登录失效重新建单。
 
 ## 第二步：登录
 
@@ -118,7 +103,7 @@ POST https://apps.telefen.com/jycalls/commodity/order/createOrder
 - 订单号与刚创建的一致
 - 积分 = 所选面额所需积分
 - 可用积分 ≥ 本单支付
-- 现金 0：页面**没有现金行**时可以判 0；**有现金行但金额为空**时不能判 0，必须等加载完成或停下补读。
+- 现金 0：没有现金行且已读到明确纯积分规则时可判 0；有现金行但金额空白时不能判 0，先等加载或补核。
 
 点一次「确认支付」后，弹出：
 
@@ -140,14 +125,14 @@ POST https://apps.telefen.com/jycalls/commodity/order/createOrder
 |---|---|---|
 | 点兑换后到 `jf.189.cn/pchome` | 桌面 UA 下收银台回跳，不是登录失效 | 停止点击；切移动 UA；查订单；只继续一笔 |
 | `login.189.cn/web/login` | 触发了 PC 账号体系 | 不要登录；回到 `apps.telefen.com` 移动流程 |
-| 订单页出现多笔「待支付」 | 重复点击造成 | 只支付一笔；其余「关闭订单」 |
-| 收银台 `payflag` 打开即回首页 | payflag 过期或 UA 不对 | 重新走一次 UI 下单；不要复用旧 payflag |
+| 订单页出现多笔「待支付」 | 可能重复点击造成 | 核对并确定继续哪笔；确定未扣分且重复的其余订单按授权关闭 |
+| 收银台 `payflag` 打开即回首页 | 可能链接过期或 UA 不对 | 先查原订单；从原订单恢复，不能因此新建或复用旧 payflag |
 | 支付后订单仍「待支付」 | 支付未完成或页面未刷新 | 刷新订单页；核对积分；不重复支付 |
 | 订单「已完成」但话费未到 | 平台完成 ≠ 到账 | 查 189.cn 充值记录/余额，或标记用户确认 |
 
 ## 收尾
 
-- 关闭重复待支付订单，保留一笔已完成。
+- 按授权关闭已核实重复、未扣分的待支付订单，不误关处理中订单。
 - 记录脱敏号码、面额、积分、现金、订单号、状态、到账证据。
 - 结束任务空间时不保留无关页面；需要用户查看结果时只保留成功页或订单页。
 - 不把完整手机号、Cookie、Token、验证码写入公开文档或仓库。

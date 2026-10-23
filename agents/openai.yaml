@@ -1,4 +1,4 @@
 interface:
   display_name: "三网积分兑换"
-  short_description: "一次提供运营商和手机号，自动路由到移动、联通或电信；支持话费、流量、语音、影音积分兑换"
-  default_prompt: "用 $carrier-points-redeem 帮我兑换积分。我的运营商和手机号是：移动 13800138000。"
+  short_description: "在 Cola 查询三网积分，按需兑换本机话费、流量、语音或影音权益"
+  default_prompt: "用 $carrier-points-redeem 查我的运营商积分和可兑内容，先不兑换。"

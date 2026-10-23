@@ -28,6 +28,8 @@ assert_file "$DEST/skills/ct-points-redeem/scripts/transaction_state.py"
 assert_file "$DEST/skills/cucc-points-redeem/references/browser-flow.md"
 assert_file "$DEST/references/observe.md"
 assert_file "$DEST/references/browser.md"
+assert_file "$DEST/scripts/observe.js"
+assert_file "$DEST/tests/test_observe.cjs"
 assert_file "$DEST/tests/test_skill_contract.py"
 [ ! -d "$DEST/.git" ] || fail "不应包含 .git"
 
@@ -37,17 +39,12 @@ bash "$ROOT/install.sh" --target "$TMP/skills" >/dev/null
 [ ! -e "$DEST/stale-file" ] || fail "旧文件未被清理"
 assert_file "$DEST/SKILL.md"
 
-echo "3. 三个子技能名称与入口路由表一致"
-for name in cmcc-points-redeem cucc-points-redeem ct-points-redeem; do
-  grep -q "skills/$name/GUIDE.md" "$DEST/SKILL.md" || fail "入口未指向 $name"
+echo "3. 运行文件完整复制且内容一致"
+for name in SKILL.md references/browser.md references/observe.md scripts/observe.js \
+  skills/cmcc-points-redeem/GUIDE.md skills/cucc-points-redeem/GUIDE.md \
+  skills/ct-points-redeem/GUIDE.md; do
+  cmp "$ROOT/$name" "$DEST/$name" || fail "安装文件与源码不同: $name"
 done
-grep -q "请告诉我你的运营商和手机号" "$DEST/SKILL.md" || fail "缺少单问入口"
-grep -q "不要用号段推断运营商" "$DEST/SKILL.md" || fail "缺少禁止号段推断规则"
-grep -q "话费（短信方法）" "$DEST/skills/cucc-points-redeem/GUIDE.md" || fail "联通话费分支未显式展示"
-grep -q "10010" "$DEST/skills/cucc-points-redeem/GUIDE.md" || fail "联通话费缺少 10010 说明"
-grep -q "话费" "$DEST/skills/cucc-points-redeem/agents/openai.yaml" || fail "联通展示信息缺少话费"
-grep -q "10010" "$DEST/SKILL.md" || fail "入口范围缺少联通话费"
-grep -q "references/observe.md" "$DEST/SKILL.md" || fail "入口缺少一屏一读模板引用"
 
 echo "4. 归档旧独立版本（可选开关）"
 mkdir -p "$TMP/skills/cmcc-points-redeem" "$TMP/skills/ct-points-redeem"
@@ -62,5 +59,17 @@ assert_file "$DEST/SKILL.md"
 echo "5. 卸载"
 bash "$ROOT/uninstall.sh" --target "$TMP/skills" >/dev/null
 [ ! -e "$DEST" ] || fail "卸载后目录仍存在"
+
+echo "6. Cola 资源源目录预装（路径含空格）"
+COLA_RESOURCE_SKILLS="$TMP/Cola Project/apps/agent-runtime/resources/skills"
+bash "$ROOT/install.sh" --target "$COLA_RESOURCE_SKILLS" >/dev/null
+BUNDLED="$COLA_RESOURCE_SKILLS/carrier-points-redeem"
+assert_file "$BUNDLED/SKILL.md"
+assert_file "$BUNDLED/scripts/observe.js"
+cmp "$ROOT/scripts/observe.js" "$BUNDLED/scripts/observe.js" || fail "摘要函数未完整打包"
+python3 -m unittest discover -s "$BUNDLED/tests" -p 'test_skill_contract.py' >/dev/null
+node --test "$BUNDLED/tests/test_observe.cjs"
+bash "$BUNDLED/uninstall.sh" --target "$COLA_RESOURCE_SKILLS" >/dev/null
+[ ! -e "$BUNDLED" ] || fail "预装目录卸载失败"
 
 echo "PASS"

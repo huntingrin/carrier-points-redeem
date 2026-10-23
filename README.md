@@ -1,180 +1,113 @@
-# 三网积分兑换统一入口
+# 三网积分兑换 · Cola 预装版
 
-把 huntingrin 的三个运营商积分兑换 Skill 收进一个入口：
+将三个运营商流程收进一个 `carrier-points-redeem` 入口，针对 Cola 已预装、已有浏览器能力的环境执行。运行时不查安装位置、不安装工具，只加载本次业务所需文件。
 
-| 运营商 | 子技能 | 能力 |
-|---|---|---|
-| 中国移动 | `cmcc-points-redeem` | 现有 AI 豆兑本机话费，现金补款 0 元 |
-| 中国联通 | `cucc-points-redeem` | 积分兑流量包、语音包、影音组合；话费走 `10010` 短信文字方法 |
-| 中国电信 | `ct-points-redeem` | 积分兑本机话费直充，现金补款 0 元 |
+| 运营商 | 范围 |
+|---|---|
+| 移动 | 现有适用 AI 豆兑本机话费，现金 0 |
+| 联通 | 积分兑流量包、语音包、影音组合；话费只给 10010 短信文字方法 |
+| 电信 | 积分兑本机话费直充，现金 0；需要真实移动 UA 和移动视口 |
 
-用户只需要在**一句话**里给出运营商和手机号，剩下的路由、登录交接、选品、短信验证和结果核对按对应子技能执行。
+登录、图形码和短信验证由本人在官方页面完成。已登录且账户匹配直接继续，会话失效时重新交接。未知余额、价格、资格与到账状态不能用历史样本补齐。
 
-## 目录结构
+## 预装到 Cola 项目
 
-```text
-.
-├── SKILL.md                    # 唯一入口：提问、校验、路由、执行约定
-├── README.md
-├── THIRD_PARTY.md              # 上游仓库、提交、本地修改与许可证说明
-├── LICENSE                     # 仅覆盖本仓库新增的整合层
-├── agents/openai.yaml          # 宿主展示信息
-├── install.sh                  # 静默安装
-├── uninstall.sh                # 卸载
-├── references/
-│   ├── observe.md              # 一屏一读：页面读取模板与降级方式（可选读）
-│   └── browser.md              # 浏览器能力分档、登录态预检与默认浏览器（可选读）
-├── skills/
-│   ├── cmcc-points-redeem/     # 移动
-│   ├── cucc-points-redeem/     # 联通
-│   └── ct-points-redeem/       # 电信
-└── tests/
-    ├── test_install.sh         # 安装/重复安装/卸载的离线测试
-    └── test_skill_contract.py  # 链接、阅读路径、安全约束的离线检查
-```
-
-三个子技能保留上游的说明书、`references/`、`scripts/` 和测试，仅去掉了与运行无关的调研与实测记录目录。子技能说明书统一命名为 `GUIDE.md`，避免宿主把嵌套目录也识别成独立技能；入口按路由结果读取对应的 `GUIDE.md`。
-
-## 一次兑换要读什么
-
-优化后的正常路径是**每家只读一到两篇**，失败和恢复用的文档默认不读：
-
-| 运营商 | 必读 | 只在失败/恢复时读 |
-|---|---|---|
-| 移动 | `GUIDE.md`（51 行，自足） | — |
-| 联通 | `GUIDE.md` + 选品时的 `redemption-types.md` + 话费分支的 `phonefee-text.md` | `browser-flow.md`、`transaction-state.md` |
-| 电信 | `GUIDE.md` + 核对面额时的 `phonefee.md` | `browser-flow.md`、`transaction-state.md` |
-
-`references/observe.md` 和 `references/browser.md` 都属于"需要时再读"：前者在要写页面提取脚本时打开，后者在宿主没有浏览器工具、或第一次导航失败时打开。
-
-正常一笔兑换**不启动任何脚本、不写中间 JSON**。子技能的 `transaction_state.py` 只在跨轮恢复或需要防重复提交时使用。
-
-## 第一次使用
-
-普通用户第一次跑，只有两件需要知道的事：
-
-1. **用你电脑上现有的浏览器，不需要装新的。** 宿主有自己的浏览器就直接用；没有就用系统默认浏览器打开官网，你点、它读。
-2. **第一次要本人登录一次**（手机号 + 短信码，部分省份还要服务密码或拼图）。同一个浏览器会保留会话，之后通常不用再登。
-
-不需要导 Cookie、不需要装插件、不需要 API Key。登录态优先复用：打开官网会先看有没有登录，已登录就直接进业务，不会再让你登一遍。
-
-## 静默安装
-
-安装阶段无交互、无配置、无 API Key。一条命令把总技能和三个子技能一起放好：
+从本仓库执行，目标是 Cola 的资源源目录，而非用户技能目录：
 
 ```sh
-./install.sh
+./install.sh --target /Users/kris/Projects/marswave/cola/apps/agent-runtime/resources/skills
 ```
 
-默认行为：
+将生成 `apps/agent-runtime/resources/skills/carrier-points-redeem/SKILL.md` 及其完整依赖，不会修改 Cola 的 TypeScript 源码。此命令会整体替换目标中同名技能，请在目标源码工作区审查变更后提交。
 
-- 检测到 `~/.codex`、`~/.cola` 或 `~/.claude` 时，安装到对应的 `skills/` 目录；
-- 一个都没检测到时，安装到 `~/.codex/skills/carrier-points-redeem`；
-- 已存在同名目录时整体替换，可重复执行。
+已核对的 Cola 副本使用现有 electron-builder 资源打包及 `bootstrapBundledResources` 部署机制，无需另加启动安装逻辑。运行位置由 Cola 给出，不把开发者项目路径写入技能。数据目录可能为 `~/.cola`、`~/.cola-cn` 或宿主配置的其他位置，运行流程不猜路径。
 
-指定目标：
+用户目录的同名技能可能覆盖内置版本；升级后若仍读到旧内容，先核对实际加载路径，再由维护者处理覆盖副本，不在每次兑换前扫描或自动删除用户技能。
 
-```sh
-./install.sh --target codex     # ~/.codex/skills
-./install.sh --target cola      # ~/.cola/skills
-./install.sh --target claude    # ~/.claude/skills
-./install.sh --target ~/my-skills
-```
+本机适配基线：`marswaveai/cola` 副本 `cdeef1ff7`（2026-10-23）。目标项目路径不在当前机器，尚未在该目标版本中执行预装或真实兑换验收。
 
-如果宿主的 `skills/` 目录里已经装了独立的 `cmcc-points-redeem`、`cucc-points-redeem`、`ct-points-redeem`，默认会保留它们，入口技能仍可正常工作。想让入口成为唯一技能，可加归档开关：
+## 浏览器能力边界
 
-```sh
-./install.sh --archive-standalone
-```
+- 用户或宿主已指定 Ego 时，按其现有 TaskSpace/后台约定执行，不自动切换浏览器。
+- Cola 已启用内置 `browser` 时，复用稳定 profile 和本任务 targetId；快照取得业务字段及 refs，不先 status/start/tabs 连续探测。
+- 下单、扣分、短信请求逐步核对，只读等待与摘要才按条件合并。
+- 本地 Cola 基线没有暴露 UA/设备模拟。电信不能仅靠 resize 跑完整兑换，也不以页面脚本伪装请求 UA。目标需提供页面级移动环境能力；缺失时在下单前停止，交由本人手机官方页面办理。Ego 可用时的准确设置见 [浏览器适配](references/browser.md#电信移动环境)。
+- 不抢前台、不导出 Cookie、不复制浏览器配置；登录与验证原页交接，等待本人确认。
 
-它会把旧的三个独立目录移到同级的 `.carrier-points-redeem-archive-<时间戳>/`，不删除。需要回滚时，先 `./uninstall.sh` 卸载入口，再把归档目录里的子技能移回 `skills/` 即可。
+## 最小阅读路径
 
-安装后的结构：
+以下均为入口 `SKILL.md` 之外的阅读量：
 
-```text
-~/.codex/skills/carrier-points-redeem/
-├── SKILL.md
-├── skills/
-│   ├── cmcc-points-redeem/
-│   ├── cucc-points-redeem/
-│   └── ct-points-redeem/
-└── ...
-```
+| 本次业务 | 读取 |
+|---|---|
+| 联通纯话费方法 | 直接读 `skills/cucc-points-redeem/references/phonefee-text.md`，不读 GUIDE、不开浏览器、不收手机号 |
+| 移动查询/兑换 | 移动 GUIDE，自足 |
+| 联通商城查询 | 联通 GUIDE；选品才加类别规则 |
+| 电信查询/兑换 | 电信 GUIDE；首次需要时只读浏览器适配的移动环境部分，规则不清才补话费规则 |
+| 异常或复杂恢复 | 对应 browser-flow / transaction-state，正常流程不预读 |
 
-宿主只看到 `carrier-points-redeem` 一个技能；子技能由入口按需读取，不会单独出现在技能列表里。
+普通业务页用一次快照；复杂页或验证页需要无输入值摘要时，按需读 [observe.md](references/observe.md)，复用 [observe.js](scripts/observe.js)。该脚本只是浏览器中的只读函数，不依赖 Node 或第三方包，不替代业务判断。
 
-### 手动安装（任意系统，含 Windows）
-
-没有 bash 时不需要安装脚本，整目录复制即可。目标目录换成你宿主实际使用的 `skills/`：
-
-```text
-macOS / Linux   ~/.codex/skills/carrier-points-redeem/
-Windows         %USERPROFILE%\.codex\skills\carrier-points-redeem\
-```
-
-复制整个仓库（包括 `SKILL.md`、`references/`、`skills/`、`agents/`）到该目录，确保 `SKILL.md` 位于目录根部。Windows 自带 Git Bash 时也可以直接 `./install.sh`。
-
-手动安装的目录，卸载就是删掉它。用安装脚本装的话：
-
-```sh
-./uninstall.sh
-./uninstall.sh --target ~/my-skills
-```
+查询不写文件。首次可能建单/扣分前保存一条私有断点，交接时保留页面标识，后续更新同一条。正常流程不启动状态脚本；跨进程保护可用子流程原有 Python 脚本（仅 macOS/Linux 的 fcntl 环境），同一笔共用原记录，不能靠新文件绕过提交状态。
 
 ## 使用
 
-安装后直接说：
+```text
+联通话费怎么换
+移动 13800138000，查查积分能兑多少，先不兑换
+电信 13900139000，兑 10 元本机话费
+继续刚才那笔，验证填好了
+```
 
-> 帮我兑换积分，移动 13800138000
+先使用当前任务已有信息；查询/兑换仅补缺失的运营商或预期手机号，只问方法无需手机号。用途不明先查，不能自行扣分。广电或虚拟运营商不硬路由，也不按号段猜实际运营商。
 
-或：
+只办本机、现金 0、无自动续订。已指定面额或商品不重复选；实际成本或条件变化时说明。状态不明先查原订单，不重复下单。报告区分提交、平台完成、用户确认到账及独立权益记录。
 
-> 联通 13900139000，看看积分能换什么
->
-> 联通 13900139000，话费怎么换
+## 目录
 
-入口只会问一次：
+```text
+SKILL.md                   唯一运行入口
+references/browser.md      Cola 接口、能力失败及电信移动环境（按需）
+references/observe.md      安全摘要调用及字段解释（按需）
+scripts/observe.js         可复用的只读函数
+skills/*/GUIDE.md          三家流程，按分支读取
+skills/*/references/      类别规则、异常恢复和可选状态脚本说明
+agents/openai.yaml         支持该格式的宿主展示信息
+install.sh / uninstall.sh  维护者安装工具
+tests/                    离线校验与摘要测试
+```
 
-> 请告诉我你的运营商和手机号，例如：移动 13800138000
+子流程使用 GUIDE.md，避免被发现为三个额外技能。README、来源记录、测试和安装脚本只供维护，运行时不读。
 
-用户同时给出两项后，入口校验格式，直接路由，不再追问“你是哪个运营商”。
+## 其他安装方式
 
-路由规则：
+保留原有兼容入口；这些是维护者操作，不是预装 skill 的运行步骤：
 
-- 移动 → `skills/cmcc-points-redeem/GUIDE.md`
-- 联通 → `skills/cucc-points-redeem/GUIDE.md`
-- 电信 → `skills/ct-points-redeem/GUIDE.md`
+```sh
+./install.sh --target cola       # 用户技能 ~/.cola/skills
+./install.sh --target codex
+./install.sh --target claude
+./install.sh --target ~/my-skills
+```
 
-## 设计约束
+不传目标时沿用原安装器的 Codex / Cola / Claude 检测与静默安装；无匹配时回落到 Codex。其他数据目录请传实际 skills 目录，不把 `--target cola` 当作所有地区/配置的路径解析器。
 
-- **不猜运营商**：运营商由用户明说，不根据号段推断，避免携号转网误路由。
-- **只支持三网**：广电、虚拟运营商、170/171 等号段会明确说明不支持，不硬路由。
-- **本机业务**：三个子技能都只办理当前登录号码的业务；登录号码与用户提供号码不一致时停止。
-- **验证码不进聊天**：登录、图形码、短信验证都由用户本人在官方页面完成。
-- **不重复提交**：扣积分不等于到账，提交订单不等于兑换成功；状态不明时先只读核对。
-- **联通话费是文字方法**：走 `10010` 短信，不是商城商品；不登录商城、不发短信、不生成二维码，具体规则以 `10010` 回复为准。
-- **手机号脱敏**：对外展示、日志和任务记录使用 `138****8000`，完整号码不写入安装目录。
+独立安装的三家技能默认保留；需要归档时显式加 `--archive-standalone`，旧目录移到同级归档目录，恢复时先卸载入口再移回。卸载用 `./uninstall.sh --target 实际skills目录`。
 
-## 测试
+手动安装（含 Windows）：将本技能目录完整复制到宿主实际 skills 目录下的 `carrier-points-redeem/`，保留 references、scripts、skills、agents 和根 SKILL.md，不复制 .git。Windows 使用 Git Bash 时也可运行安装脚本；本机预装目录由目标项目决定。
 
-在源码仓库或安装后的技能目录里都可以运行（安装会一并拷贝 `tests/`）：
+## 验证
 
 ```sh
 bash tests/test_install.sh
 python3 -m unittest discover -s tests -p 'test_skill_contract.py' -v
+node --test tests/test_observe.cjs
 ```
 
-测试在临时目录中执行安装、重复安装和卸载，并检查文档链接、正常路径规模、脱敏与安全约束；不访问网络。
+离线检查覆盖安装/重复安装/卸载、Cola 资源目录打包、唯一技能发现、引用有效性、阅读字符预算、文档号码脱敏，以及摘要对零余额、敏感输入、网址参数、长度限制的处理。Python 检查也运行两份未改动的状态脚本测试。测试需要 Python 3、Node 和 Bash；这些不成为普通兑换流程的安装要求。
 
-子技能自带的状态脚本测试：
+静态检查不能证明 Agent 会正确决策，网页实测需在目标 Cola 中另做：已登录直接查询、一次登录交接、联通文字分支、账户不符停止、超时恢复不重提、电信移动环境缺失时停止。有真实兑换授权后才能测试扣分，不为验收自行花积分。文档阅读量减少不等于已测得网页耗时提升。
 
-```sh
-cd skills/ct-points-redeem   && python3 -m unittest discover -s tests -p 'test_transaction_state.py' -v
-cd skills/cucc-points-redeem && python3 -m unittest discover -s tests -p 'test_transaction_state.py' -v
-```
+## 来源
 
-## 来源与许可证
-
-三个子技能来自 huntingrin 的公开仓库，提交号和许可证状态见 [THIRD_PARTY.md](THIRD_PARTY.md)。
-
-本仓库新增的整合层（入口 `SKILL.md`、安装脚本、说明文档）使用 MIT License；该许可不改变三个子技能各自的版权与许可状态。
+上游提交、许可及本地修改见 [THIRD_PARTY.md](THIRD_PARTY.md)。整合层和新增摘要函数采用本仓库 MIT License，子流程沿用各自许可状态。

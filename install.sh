@@ -69,6 +69,7 @@ copy_bundle() {
     "$SCRIPT_DIR/LICENSE" \
     "$SCRIPT_DIR/agents" \
     "$SCRIPT_DIR/references" \
+    "$SCRIPT_DIR/scripts" \
     "$SCRIPT_DIR/skills" \
     "$SCRIPT_DIR/tests" \
     "$SCRIPT_DIR/install.sh" \
